@@ -21,6 +21,9 @@ namespace QuantileCalculation.Test
             new object[] { 25m, 2m },
             new object[] { 50m, 7m },
             new object[] { 75m, 20m },
+            new object[] { 100m, 34m },
+            new object[] { 200m, 34m },
+            new object[] { 0m, 1m },
             new object[] { 10m, 1.4m }
         };
 
@@ -34,7 +37,7 @@ namespace QuantileCalculation.Test
             var controller = new QuantileCalculationController(mockRepo.Object);
 
             // Act
-            var response = controller.AddorUpdate(testData);
+            var response = controller.AddorAppend(testData);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(response);
@@ -60,11 +63,11 @@ namespace QuantileCalculation.Test
             mockRepo.Setup(repo=>repo.Append(It.IsAny<Pool>(), testData.PoolId)).Returns(testData);
 
             var controller = new QuantileCalculationController(mockRepo.Object);
-            controller.AddorUpdate(testData);
+            controller.AddorAppend(testData);
            
 
             // Act
-            var response = controller.AddorUpdate(modifyData);
+            var response = controller.AddorAppend(modifyData);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(response);

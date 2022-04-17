@@ -15,17 +15,18 @@ namespace QuantileCalculation.Controllers
             _repository = repository;
         }
 
-        [HttpPost("AddorUpdate")]
-        public IActionResult AddorUpdate(Pool data)
+        [HttpPost("AddorAppend")]
+        public IActionResult AddorAppend(Pool data)
         {
             if (_repository.Any(data.PoolId))
             {
-                var updatedItem = _repository.Get(data.PoolId);
-                return UpdateData(data, updatedItem.PoolId);
+                var result = AppendData(data);
+                return Ok(result);
             }
             else
             {
-                return CreateData(data);
+                var result = CreateData(data);
+                return Ok(result);
             }
         }
 
@@ -44,12 +45,13 @@ namespace QuantileCalculation.Controllers
                 return NotFound();
 
             var arr = item.PoolValues.ToArray();
-            var quantile = Helpers.CalculateQuantile(arr, request.Percentile, arr.Length);
+            var len = arr.Length;
+            var quantile = Helpers.CalculateQuantile(arr, request.Percentile, len);
             var result = new CalculateDto
             {
                 PoolId = request.PoolId,
                 CalculatedValue = quantile,
-                TotalCount = arr.Length
+                TotalCount = len
             };
             if (level2 == null)
             {
@@ -68,7 +70,7 @@ namespace QuantileCalculation.Controllers
             return Ok(result);
         }
 
-        private IActionResult CreateData(Pool data)
+        private PoolDto CreateData(Pool data)
         {
             data = _repository.Create(data);
             var poolDto = new PoolDto
@@ -77,12 +79,14 @@ namespace QuantileCalculation.Controllers
                 PoolValues = data.PoolValues,
                 Status = Status.Inserted
             };
-            return Ok(poolDto);
+            return poolDto;
+           
         }
 
-        private IActionResult UpdateData(Pool data, int updatedId)
+        private PoolDto AppendData(Pool data)
         {
-            var updatedData = _repository.Append(data, updatedId);
+            var updatedItem = _repository.Get(data.PoolId);
+            var updatedData = _repository.Append(data, updatedItem.PoolId);
             var poolDto = new PoolDto
             {
                 PoolId = updatedData.PoolId,
@@ -90,7 +94,7 @@ namespace QuantileCalculation.Controllers
                 Status = Status.Appended
             };
             _cache.Remove(data.PoolId);
-            return Ok(poolDto);
+            return poolDto;
         }
     }
 }
